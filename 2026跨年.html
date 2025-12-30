@@ -1,5 +1,33 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+<script>
+//屏蔽F12和右键
+ function click(e) {
+ if (document.all) {
+ if (event.button == 2 || event.button == 3) {
+ alert("欢迎光临寒舍，有什么需要帮忙的话，请与站长联系！谢谢您的合作！！！");
+          oncontextmenu = 'return false';
+        }
+      }
+ if (document.layers) {
+ if (e.which == 3) {
+          oncontextmenu = 'return false';
+        }
+      }
+    }
+ if (document.layers) {
+      document.captureEvents(Event.MOUSEDOWN);
+    }
+    document.onmousedown = click;
+    document.oncontextmenu = new Function("return false;")
+
+    document.onkeydown = document.onkeyup = document.onkeypress = function () {
+ if (window.event.keyCode == 123) {
+        window.event.returnValue = false;
+ return (false);
+      }
+    }
+</script>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -73,7 +101,7 @@
             }
         }
 
-        /* 新增：提前欣赏烟花链接样式 - 华丽视觉效果 */
+        /* 提前欣赏烟花链接样式 - 华丽视觉效果 */
         .firework-preview-link {
             color: #fff;
             font-size: 1.1rem;
@@ -88,6 +116,7 @@
             transition: all 0.3s ease;
             letter-spacing: 1px;
             box-shadow: 0 0 15px rgba(255, 0, 79, 0.5), 0 0 25px rgba(162, 0, 255, 0.3);
+            margin-bottom: 1.5rem;
         }
 
         /* 链接悬浮效果 */
@@ -123,6 +152,87 @@
             letter-spacing: 2px;
         }
 
+        /* 新增：打卡模块样式 - 华丽视觉与实用结合 */
+        .checkin-module {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 10;
+            margin-top: 1rem;
+        }
+
+        /* 打卡人数显示 */
+        .checkin-count {
+            color: #fff;
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 25px;
+            border-radius: 30px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 10px rgba(0, 255, 157, 0.3);
+        }
+
+        .checkin-count span {
+            color: #00ff9d;
+            font-weight: bold;
+            font-size: 1.5rem;
+            text-shadow: 0 0 10px #00ff9d;
+        }
+
+        /* 打卡按钮样式 */
+        .checkin-btn {
+            color: #fff;
+            font-size: 1.1rem;
+            border: none;
+            padding: 12px 35px;
+            border-radius: 50px;
+            background: linear-gradient(45deg, #00ff9d, #4d79ff);
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.3s ease;
+            letter-spacing: 1px;
+            box-shadow: 0 0 15px rgba(0, 255, 157, 0.5), 0 0 25px rgba(77, 121, 255, 0.3);
+        }
+
+        .checkin-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 20px rgba(0, 255, 157, 0.7), 0 0 35px rgba(77, 121, 255, 0.5);
+            letter-spacing: 2px;
+        }
+
+        /* 已打卡按钮样式（禁用状态） */
+        .checkin-btn.disabled {
+            background: linear-gradient(45deg, #666, #999);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 0 0 10px rgba(102, 102, 102, 0.5);
+        }
+
+        /* 打卡成功提示 */
+        .checkin-tip {
+            color: #00ff9d;
+            font-size: 1rem;
+            margin-top: 10px;
+            opacity: 0;
+            animation: checkinFade 2s ease forwards;
+        }
+
+        @keyframes checkinFade {
+            0% {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+            50% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-5px);
+            }
+        }
+
         /* 烟花画布 - 全屏覆盖，置于底层 */
         canvas {
             position: absolute;
@@ -137,13 +247,20 @@
 <body>
     <!-- 倒计时显示容器 -->
     <div class="countdown" id="countdown"></div>
-    <div class="tip">2026年即将结束...</div>
+    <div class="tip">2026即将到来...</div>
+    <!-- 提前欣赏烟花秀链接 -->
     <a href="2026.html" class="firework-preview-link" target="_blank">🎆 提前欣赏烟花秀</a>
+    <!-- 新增：打卡模块 -->
+    <div class="checkin-module">
+        <div class="checkin-count">当前打卡人数：<span id="checkinNum">0</span> 人</div>
+        <button class="checkin-btn" id="checkinBtn">✅ 立即打卡</button>
+        <div class="checkin-tip" id="checkinTip"></div>
+    </div>
     <!-- 烟花特效画布 -->
     <canvas id="fireworksCanvas"></canvas>
 
     <script>
-        const targetTime = new Date(2025, 11, 31, 11, 59, 50, 0).getTime();
+        const targetTime = new Date(2025, 11, 31, 11, 59, 55, 0).getTime();
         const targetUrl = "2026.html";
 
         // 2. 倒计时核心逻辑
@@ -294,7 +411,66 @@
         // 启动烟花特效
         createFirework();
         animateFireworks();
+
+        // 4. 新增：人数打卡核心功能（基于localStorage存储，本地持久化）
+        const checkinBtn = document.getElementById("checkinBtn");
+        const checkinNumEl = document.getElementById("checkinNum");
+        const checkinTipEl = document.getElementById("checkinTip");
+        const CHECKIN_KEY = "user_has_checkin"; // 标记用户是否已打卡的本地存储key
+        const CHECKIN_COUNT_KEY = "total_checkin_count"; // 存储总打卡人数的本地存储key
+
+        // 初始化打卡人数
+        function initCheckinCount() {
+            // 获取本地存储的打卡人数，若无则默认0
+            const totalCount = localStorage.getItem(CHECKIN_COUNT_KEY) || 0;
+            checkinNumEl.innerText = totalCount;
+
+            // 检查用户是否已打卡，若已打卡则禁用按钮
+            const hasCheckin = localStorage.getItem(CHECKIN_KEY);
+            if (hasCheckin) {
+                checkinBtn.innerText = "✅ 已打卡";
+                checkinBtn.classList.add("disabled");
+                checkinBtn.disabled = true;
+            }
+        }
+
+        // 打卡核心逻辑
+        function handleCheckin() {
+            // 防止重复点击（已禁用按钮，此处做双重防护）
+            if (checkinBtn.classList.contains("disabled")) return;
+
+            // 1. 更新总打卡人数
+            let totalCount = parseInt(localStorage.getItem(CHECKIN_COUNT_KEY) || 0);
+            totalCount += 1;
+            localStorage.setItem(CHECKIN_COUNT_KEY, totalCount);
+            checkinNumEl.innerText = totalCount;
+
+            // 2. 标记用户已打卡（持久化存储，关闭页面后仍有效）
+            localStorage.setItem(CHECKIN_KEY, "1");
+
+            // 3. 更新按钮状态
+            checkinBtn.innerText = "✅ 已打卡";
+            checkinBtn.classList.add("disabled");
+            checkinBtn.disabled = true;
+
+            // 4. 显示打卡成功提示
+            checkinTipEl.innerText = "打卡成功！感谢你的参与～";
+            checkinTipEl.style.animation = "none";
+            // 强制重绘动画
+            setTimeout(() => {
+                checkinTipEl.style.animation = "checkinFade 2s ease forwards";
+            }, 10);
+
+            // 5. 打卡时额外触发一次烟花绽放（增强互动体验）
+            const x = window.innerWidth / 2;
+            const y = window.innerHeight / 2;
+            fireworks.push(new FireworkParticle(x, y));
+        }
+
+        // 初始化打卡模块
+        initCheckinCount();
+        // 绑定打卡按钮点击事件
+        checkinBtn.addEventListener("click", handleCheckin);
     </script>
 </body>
-
 </html>
