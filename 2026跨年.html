@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2025年末倒计时</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* 页面全屏样式，黑色背景凸显烟花 */
+        body {
+            width: 100vw;
+            height: 100vh;
+            background-color: #000;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: "Microsoft Yahei", sans-serif;
+        }
+
+        /* 倒计时文字样式 - 华丽视觉效果 */
+        .countdown {
+            font-size: 5rem;
+            font-weight: bold;
+            background: linear-gradient(90deg, #ff004f, #ffeb3b, #00ff9d, #4d79ff);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientMove 3s ease infinite;
+            z-index: 10; /* 确保文字在烟花上方 */
+            margin-bottom: 2rem;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        /* 渐变文字动画 */
+        @keyframes gradientMove {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        /* 提示文字样式 */
+        .tip {
+            color: #fff;
+            font-size: 1.2rem;
+            opacity: 0.8;
+            z-index: 10;
+            letter-spacing: 2px;
+            animation: fadeInOut 2s ease infinite alternate;
+            margin-bottom: 1.5rem;
+        }
+
+        @keyframes fadeInOut {
+            from {
+                opacity: 0.6;
+                transform: translateY(0);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(-5px);
+            }
+        }
+
+        /* 新增：提前欣赏烟花链接样式 - 华丽视觉效果 */
+        .firework-preview-link {
+            color: #fff;
+            font-size: 1.1rem;
+            text-decoration: none;
+            padding: 12px 30px;
+            border: 2px solid transparent;
+            border-radius: 50px;
+            background: linear-gradient(45deg, #ff004f, #a200ff);
+            background-clip: padding-box;
+            position: relative;
+            z-index: 10;
+            transition: all 0.3s ease;
+            letter-spacing: 1px;
+            box-shadow: 0 0 15px rgba(255, 0, 79, 0.5), 0 0 25px rgba(162, 0, 255, 0.3);
+        }
+
+        /* 链接悬浮效果 */
+        .firework-preview-link::before {
+            content: "";
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #ff004f, #ffeb3b, #00ff9d, #4d79ff, #a200ff);
+            border-radius: 50px;
+            z-index: -1;
+            animation: borderGradient 2s ease infinite;
+            background-size: 400% 400%;
+        }
+
+        @keyframes borderGradient {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .firework-preview-link:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 20px rgba(255, 0, 79, 0.7), 0 0 35px rgba(162, 0, 255, 0.5);
+            letter-spacing: 2px;
+        }
+
+        /* 烟花画布 - 全屏覆盖，置于底层 */
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <!-- 倒计时显示容器 -->
+    <div class="countdown" id="countdown"></div>
+    <div class="tip">2026年即将结束...</div>
+    <a href="2026.html" class="firework-preview-link" target="_blank">🎆 提前欣赏烟花秀</a>
+    <!-- 烟花特效画布 -->
+    <canvas id="fireworksCanvas"></canvas>
+
+    <script>
+        const targetTime = new Date(2025, 11, 31, 11, 59, 50, 0).getTime();
+        const targetUrl = "2026.html";
+
+        // 2. 倒计时核心逻辑
+        const countdownEl = document.getElementById("countdown");
+        function updateCountdown() {
+            // 获取当前时间戳
+            const now = new Date().getTime();
+            // 计算剩余时间（毫秒）
+            const remainingTime = targetTime - now;
+
+            // 若剩余时间小于等于0，执行跳转
+            if (remainingTime <= 0) {
+                countdownEl.innerHTML = "跳转中...";
+                window.location.href = targetUrl;
+                clearInterval(countdownTimer);
+                return;
+            }
+
+            // 时间格式化：天、时、分、秒
+            const days = Math.floor(remainingTime / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+
+            // 补零（确保单个数字显示为两位，如1显示为01）
+            const formatNum = (num) => num.toString().padStart(2, "0");
+            countdownEl.innerHTML = `${days}天 ${formatNum(hours)}:${formatNum(minutes)}:${formatNum(seconds)}`;
+        }
+
+        // 初始化倒计时并设置定时器（每秒更新一次）
+        updateCountdown();
+        const countdownTimer = setInterval(updateCountdown, 1000);
+
+        // 3. 华丽烟花特效核心逻辑
+        const canvas = document.getElementById("fireworksCanvas");
+        const ctx = canvas.getContext("2d");
+
+        // 设置画布尺寸为窗口大小
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener("resize", resizeCanvas);
+
+        // 烟花粒子类
+        class FireworkParticle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                // 随机粒子数量和颜色
+                this.count = Math.floor(Math.random() * 50) + 30;
+                this.particles = [];
+                this.initParticles();
+            }
+
+            // 初始化粒子属性
+            initParticles() {
+                // 随机渐变颜色（红、橙、黄、蓝、紫等华丽色系）
+                const colors = ["#ff004f", "#ff9d00", "#ffeb3b", "#00ff9d", "#4d79ff", "#a200ff"];
+                this.particleColor = colors[Math.floor(Math.random() * colors.length)];
+
+                for (let i = 0; i < this.count; i++) {
+                    // 随机角度和速度
+                    const angle = (Math.PI * 2) / this.count * i;
+                    const speed = Math.random() * 5 + 2;
+                    this.particles.push({
+                        x: this.x,
+                        y: this.y,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        alpha: 1, // 透明度
+                        gravity: 0.05, // 重力影响
+                        decay: Math.random() * 0.01 + 0.005, // 粒子衰减速度
+                    });
+                }
+            }
+
+            // 更新粒子位置和状态
+            update() {
+                let isAllDead = true;
+                for (let i = 0; i < this.particles.length; i++) {
+                    const p = this.particles[i];
+                    if (p.alpha > 0) {
+                        // 应用重力
+                        p.vy += p.gravity;
+                        // 更新位置
+                        p.x += p.vx;
+                        p.y += p.vy;
+                        // 降低透明度
+                        p.alpha -= p.decay;
+                        isAllDead = false;
+                    }
+                }
+                return isAllDead; // 返回是否所有粒子已消亡
+            }
+
+            // 绘制粒子
+            draw() {
+                for (let i = 0; i < this.particles.length; i++) {
+                    const p = this.particles[i];
+                    if (p.alpha > 0) {
+                        ctx.save();
+                        ctx.globalAlpha = p.alpha;
+                        ctx.fillStyle = this.particleColor;
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                    }
+                }
+            }
+        }
+
+        let fireworks = [];
+        // 随机生成烟花
+        function createFirework() {
+            // 随机烟花生成位置（窗口内）
+            const x = Math.random() * canvas.width;
+            const y = Math.random() * canvas.height;
+            fireworks.push(new FireworkParticle(x, y));
+
+            // 随机生成间隔（100-500毫秒，确保烟花连续绽放）
+            setTimeout(createFirework, Math.random() * 400 + 100);
+        }
+
+        // 动画循环
+        function animateFireworks() {
+            // 半透明黑色背景，实现烟花轨迹渐变效果
+            ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 更新并绘制所有烟花
+            for (let i = fireworks.length - 1; i >= 0; i--) {
+                const fw = fireworks[i];
+                const isDead = fw.update();
+                fw.draw();
+
+                // 移除已消亡的烟花，优化性能
+                if (isDead) {
+                    fireworks.splice(i, 1);
+                }
+            }
+
+            requestAnimationFrame(animateFireworks);
+        }
+
+        // 启动烟花特效
+        createFirework();
+        animateFireworks();
+    </script>
+</body>
+</html>
